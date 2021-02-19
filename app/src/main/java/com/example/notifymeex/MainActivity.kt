@@ -16,7 +16,6 @@ import android.os.Bundle
 import android.widget.Button
 import androidx.core.app.NotificationCompat
 
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var notifyMeButton: Button
@@ -32,26 +31,26 @@ class MainActivity : AppCompatActivity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             updateNotification()
         }
-
     }
 
     private fun sendNotification() {
         val updateIntent = Intent(ACTION_UPDATE_NOTIFICATION)
         val pendingIntent = PendingIntent.getBroadcast(this, NOTIFICATION_ID, updateIntent, PendingIntent.FLAG_ONE_SHOT)
-        val notifyBuilder = getNotificationBuilder()!!
-        mNotificationManager.notify(NOTIFICATION_ID, notifyBuilder.build())
+        val notifyBuilder = getNotificationBuilder()
         notifyBuilder.addAction(R.drawable.ic_update, "update Notification", pendingIntent)
-        setNotificationButtonState(false, true, true)
+
+        mNotificationManager.notify(NOTIFICATION_ID, notifyBuilder.build())
+        setNotificationButtonState(isNotifyEnabled = false, isUpdateEnabled = true, isCancelEnabled = true)
     }
 
     private fun updateNotification(){
         val androidBitMap: Bitmap = BitmapFactory.decodeResource(resources, R.drawable.mascot_1)
-        val notifyBuilder = getNotificationBuilder()!!
+        val notifyBuilder = getNotificationBuilder()
         notifyBuilder.setStyle(NotificationCompat.BigPictureStyle()
             .bigPicture(androidBitMap)
             .setBigContentTitle("Notification Updated!"))
         mNotificationManager.notify(NOTIFICATION_ID, notifyBuilder.build())
-        setNotificationButtonState(false, false, true)
+        setNotificationButtonState(isNotifyEnabled = false, isUpdateEnabled = false, isCancelEnabled = true)
     }
 
     private fun cancelNotification(){
@@ -63,7 +62,7 @@ class MainActivity : AppCompatActivity() {
         mNotificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
         if (android.os.Build.VERSION.SDK_INT >=
                 android.os.Build.VERSION_CODES.O) {
-            val channel = NotificationChannel("$PRIMARY_CHANNEL_ID", "Mascot Notification",
+            val channel = NotificationChannel(PRIMARY_CHANNEL_ID, "Mascot Notification",
                     NotificationManager.IMPORTANCE_HIGH)
             channel.enableLights(true)
             channel.enableVibration(true)
@@ -73,11 +72,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getNotificationBuilder(): NotificationCompat.Builder? {
+    private fun getNotificationBuilder(): NotificationCompat.Builder {
         val notificationIntent = Intent(this, MainActivity::class.java)
         val notificationPendingIntent = PendingIntent.getActivity(this, NOTIFICATION_ID,
                 notificationIntent, FLAG_UPDATE_CURRENT)
-        return NotificationCompat.Builder(this, "$PRIMARY_CHANNEL_ID")
+        return NotificationCompat.Builder(this, PRIMARY_CHANNEL_ID)
                 .setContentTitle("You've been notified!")
                 .setContentText("This is your application text.")
                 .setSmallIcon(R.drawable.ic_android)
@@ -88,9 +87,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setNotificationButtonState(isNotifyEnabled: Boolean, isUpdateEnabled: Boolean, isCancelEnabled: Boolean){
-        notifyMeButton.setEnabled(isNotifyEnabled)
-        updateMeButton.setEnabled(isUpdateEnabled)
-        cancelMeButton.setEnabled(isCancelEnabled)
+        notifyMeButton.isEnabled = isNotifyEnabled
+        updateMeButton.isEnabled = isUpdateEnabled
+        cancelMeButton.isEnabled = isCancelEnabled
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,21 +97,21 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         notifyMeButton = findViewById(R.id.notify)
-        notifyMeButton.setOnClickListener() {
+        notifyMeButton.setOnClickListener {
             sendNotification()
         }
         createNotificationChannel()
 
         updateMeButton = findViewById(R.id.update)
-        updateMeButton.setOnClickListener(){
+        updateMeButton.setOnClickListener {
             updateNotification()
         }
 
         cancelMeButton = findViewById(R.id.cancel)
-        cancelMeButton.setOnClickListener(){
+        cancelMeButton.setOnClickListener {
             cancelNotification()
         }
-        setNotificationButtonState(true, false, false)
+        setNotificationButtonState(isNotifyEnabled = true, isUpdateEnabled = false, isCancelEnabled = false)
 
         registerReceiver(mReceiver, IntentFilter(ACTION_UPDATE_NOTIFICATION))
     }
@@ -120,6 +119,5 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         unregisterReceiver(mReceiver)
         super.onDestroy()
-
     }
 }
